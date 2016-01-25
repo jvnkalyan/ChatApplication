@@ -21,8 +21,23 @@
 				
 				//get required nodes
 				textarea = getNode('.chat-textarea'),
-				chatName = getNode('.chat-name');
+				chatName = getNode('.chat-name'),
+				status = getNode('.chat-status span');
 				
+				statusDefault = status.textContent;
+				
+				setStatus = function(s) {
+					status.textContent = s;
+					
+					if(s != statusDefault) {
+						var delay = setTimeout(function(){
+							setStatus(statusDefault);
+							clearInterval(delay);
+						}, 3000);
+					}
+				};
+				
+										
 				//connect to the socket
 				try {
 					var socket = io.connect('http://127.0.0.1:8080');
@@ -33,6 +48,16 @@
 				
 				if(socket !== undefined)
 				{
+				
+					//listen for a status
+					socket.on('status',function(data) {
+						setStatus((typeof data === 'object') ? data.message : data);
+						
+						if(data.clear === true) {
+							textarea.value = '';
+						}
+					});
+					
 					//Listen for keydown
 					textarea.addEventListener('keydown',function(event) {
 						var self = this,
@@ -44,7 +69,7 @@
 								message:self.value
 							});
 							
-							//why we need this ?
+							//This event will prevent the default 'Enter' key down
 							event.preventDefault();
 						}						
 					});
