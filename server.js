@@ -11,6 +11,12 @@ mongo.connect('mongodb://127.0.0.1/chat',function(err, db){
 			socket.emit('status',s);
 		};
 		
+		//emit all messages
+		col.find().limit(100).sort({_id:1}).toArray(function(err, res) {
+				if(err) throw err;
+				socket.emit('output', res);
+		});
+		
 		//wait for input
 		socket.on('input',function(data){
 			var name = data.name,
@@ -24,6 +30,10 @@ mongo.connect('mongodb://127.0.0.1/chat',function(err, db){
 			else
 			{
 				col.insert({name:name,message:message}, function(){
+				
+					//Emit all messages to all clients
+					client.emit('output',[data]);
+				
 					sendStatus({
 						message: "message sent",
 						clear: true
